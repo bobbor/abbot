@@ -1,0 +1,20 @@
+{
+  "name": "jenkins",
+  "version": "1.0.0",
+  "description": "",
+  "bin": "jenkins",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "better-console": "^1.0.1",
+    "chalk": "^2.3.2",
+    "charm": "^1.0.2",
+    "inquirer": "^5.1.0",
+    "minimist": "^1.2.0",
+    "node-fetch": "^2.1.1",
+    "rc": "^1.2.5"
+  }
+}
