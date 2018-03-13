@@ -1,20 +1,35 @@
 {
-  "name": "jenkins",
+  "name": "abbot",
   "version": "1.0.0",
-  "description": "",
-  "bin": "jenkins",
+  "description": "abbot helps you track your jenkins builds",
+  "main": "./bin/abbot",
+  "bin": {
+    "abbot": "./bin/abbot"
+  },
   "scripts": {
+    "start": "node ./bin/abbot",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "jenkins",
+    "ci",
+    "commandline",
+    "terminal"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bobbor/abbot"
+  },
+  "issues": "https://github.com/bobbor/abbot/issues",
+  "author": "Philipp Paul <me@philipp-paul.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "debug": "^3.1.0"
+  },
   "dependencies": {
     "beepbeep": "^1.2.1",
-    "better-console": "^1.0.1",
     "chalk": "^2.3.2",
-    "charm": "^1.0.2",
     "cli-spinners": "^1.1.0",
-    "debug": "^3.1.0",
     "inquirer": "^5.1.0",
     "lodash.omit": "^4.5.0",
     "minimist": "^1.2.0",
