@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "beepbeep": "^1.2.1",
     "better-console": "^1.0.1",
     "chalk": "^2.3.2",
     "charm": "^1.0.2",
