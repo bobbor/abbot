@@ -12,7 +12,10 @@
     "better-console": "^1.0.1",
     "chalk": "^2.3.2",
     "charm": "^1.0.2",
+    "cli-spinners": "^1.1.0",
+    "debug": "^3.1.0",
     "inquirer": "^5.1.0",
+    "lodash.omit": "^4.5.0",
     "minimist": "^1.2.0",
     "node-fetch": "^2.1.1",
     "rc": "^1.2.5"

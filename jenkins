@@ -1,183 +1,63 @@
 #!/usr/bin/env node
 /* eslint-env node */
-const rc = require('rc');
-const inquirer = require('inquirer');
-const fs = require('fs');
-const fetch = require('node-fetch');
 const chalk = require('chalk');
-const console = require('better-console');
-const { exec } = require('child_process');
-const url = require('url');
-const args = require('minimist')(process.argv.slice(2));
 
-const getHumanReadableTime = (duration) => {
-  let idx = 0;
-  const nums = [];
-  const intervals = [1000, 60, 60, 24];
-  const names = ['ms', 's', 'm', 'h', 'd'];
-  while(duration > 0 && idx < intervals.length) {
-    nums[idx] = duration % intervals[idx];
-    duration -= nums[idx];
-    duration /= intervals[idx];
-    idx++;
-  }
+const {promptForInstance, promptForProject} = require('./lib/prompt');
+const { printJobState } = require('./lib/utils');
+const { checkStateGenerator } = require('./lib/net');
+const {notify} = require('./lib/notify')
 
-  const times = nums.map((num, idx) => {
-    return `${num}${names[idx]}`;
-  }).reverse();
-  times.pop();
-  return times.join(' ');
-};
-const formatResultWithChalk = (result) => {
-  if(result === 'SUCCESS') {
-    return chalk`{greenBright ✔ Success}`;
-  }
-  if(result === 'FAILURE') {
-    return chalk`{redBright ✖ Failure}`;
-  }
-  if(result === 'ABORTED') {
-    return chalk`{gray ✖ aborted}`;
-  }
-  return result
-};
-const formatResult = (result) => {
-  if(result === 'SUCCESS') {
-    return `✔ Success`;
-  }
-  if(result === 'FAILURE') {
-    return `✖ Failure`;
-  }
-  if(result === 'ABORTED') {
-    return `✖ aborted`;
-  }
-  return result
-};
-
-const getCredentials = () => {
-  console.clear();
-  const credentials = rc('jenkins');
-
-  delete credentials.config;
-  delete credentials.configs;
-  delete credentials._;
-  delete credentials.defaults;
-
-  const questions = [];
-  if(!('user' in credentials)) {
-    questions.push({
-      type: 'input',
-      name: 'user',
-      message: 'provide your jenkins username'
-    });
-  }
-  if(!('token' in credentials)) {
-    questions.push({
-      type: 'password',
-      name: 'token',
-      message: 'provide your jenkins credentials'
-    })
-  }
-  if(!('jenkins' in credentials)) {
-    questions.push({
-      type: 'input',
-      name: 'jenkins',
-      message: 'provide your jenkins instance (e.g. https://app.jenkins.net)'
-    });
-  }
-  if(questions.length) {
-    return inquirer.prompt(questions).then(answers => {
-      const content = Object.assign({}, credentials, answers);
-      fs.writeFileSync(`${process.env.HOME}/.jenkinsrc`, JSON.stringify(content));
-      return answers;
-    });
-  }
-  return Promise.resolve(credentials);
-};
-const getProject = () => {
-  const {project, job} = args;
-  const questions = [];
-  if(!project) {
-    questions.push({
-      type: 'input',
-      name: 'project',
-      message: 'which project to poll'
-    });
-  }
-  if(!job) {
-    questions.push({
-      type: 'input',
-      name: 'job',
-      default: 'lastBuild',
-      message: 'which job number to poll'
-    });
-  }
-  if(questions.length) {
-    return inquirer.prompt(questions).then(answers => {
-      return Object.assign({}, {project, job}, answers);
-    });
-  }
-  return Promise.resolve({project, job})
-};
-
-const getJobStatus = ({credentials, project}) => {
-  const jenkins = url.parse(credentials.jenkins);
-  const domain = `${jenkins.protocol}//${credentials.user}:${credentials.token}@${jenkins.hostname}/job/`;
-  const api = "/api/json?tree=result,estimatedDuration,duration,building,fullDisplayName,url,timestamp";
-  const req = () => {
-    return fetch(`${domain}${project.project}/${project.job}${api}`).then(res => {
-      if(!res.ok) {
-        if(res.status === 404) {
-          throw new Error(`Project (${project.project}) or Job (${project.job}) could not be found`);
-        }
-        throw new Error('Jenkins is not reachable');
+const log = require('debug')('jenkins:main');
+let state;
+const poll = async (updater) => {
+  log('start polling');
+  const run = async (initial) => {
+    const job = await updater();
+    log('got job', job);
+    state = {
+      url: job.url,
+      name: job.fullDisplayName,
+      result: job.result,
+      building: job.building,
+      estimatedDuration: job.estimatedDuration,
+      state: job.building ? 'building' : 'finished',
+      timestamp: job.timestamp,
+      duration: job.duration
+    };
+    log('got state', state);
+    if(state.building) {
+      log('will reschedule for 15s');
+      setTimeout(() => {
+        run();
+      }, 15000)
+    } else {
+      if(!initial) {
+        notify(state);
       }
-      return res.json()
-    })
+    }
   };
-  let counter = 0;
 
-  const makeRequest = (silent) => {
-    return req().then(job => {
-      console.clear();
-      counter = (counter + 1) % 5;
-      console.log(`${job.url}\n`);
-      if(job.building) {
-        console.log(chalk`
-{blue.bold.underline ${job.fullDisplayName}}
-{blue           duration} : ${getHumanReadableTime(Date.now() - job.timestamp)}
-{blue             status} : building
-{blue estimated duration} : ${getHumanReadableTime(job.estimatedDuration)}
-`);
-      } else {
-      console.log(chalk`
-{blue.bold.underline ${job.fullDisplayName}}
-{blue           duration} : ${getHumanReadableTime(job.duration)}
-{blue             status} : finished
-{blue             result} : ${formatResultWithChalk(job.result)}
-`);
-      }
-      if(job.building) {
-        console.log(`building ${Array.from({length: counter}).map(() => '.').join('')}`);
-        return Promise.resolve(setTimeout(makeRequest, 10000));
-      }
-      if(!silent) {
-        console.log('done !');
-        const titleStatus = formatResult(job.result);
-        const message = `${job.fullDisplayName} finished. (${getHumanReadableTime(job.duration)}) `;
-        exec(`terminal-notifier -message "${message}" -title "${titleStatus} Jenkins"`);
-      }
-    })
+  const print = (initial) => {
+    printJobState(state, initial);
+    if(!state || state.building) {
+      log('reschedule printing for 1s');
+      setTimeout(() => {
+        print(!state);
+      }, 350);
+    }
   };
-  return makeRequest(true);
+
+  await run(true);
+  print(true);
 };
 
-getCredentials()
-    .then(credentials => {
-      return getProject().then(project => {
-        return {credentials, project};
-      });
-    })
-    .then(getJobStatus)
-    .catch(err => {
-      console.log(chalk`{red.bold ${err.message}}`)
-    });
+Promise.resolve().then(async () => {
+  log('starting');
+  const project = await promptForInstance();
+  const credentials = await promptForProject();
+  const updater = checkStateGenerator(project, credentials);
+
+  poll(updater);
+}).catch(err => {
+  console.log(chalk`{red.bold ${err.message}}`)
+});
