@@ -2,10 +2,10 @@
 /* eslint-env node */
 const chalk = require('chalk');
 
-const {promptForInstance, promptForProject} = require('./lib/prompt');
+const { promptForInstance, promptForProject } = require('./lib/prompt');
 const { printJobState } = require('./lib/utils');
 const { checkStateGenerator } = require('./lib/net');
-const {notify} = require('./lib/notify')
+const {notify} = require('./lib/notify');
 
 const log = require('debug')('jenkins:main');
 let state;
