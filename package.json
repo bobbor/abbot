@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "description": "abbot helps you track your jenkins builds",
   "main": "./bin/abbot",
-  "bin": {
-    "abbot": "./bin/abbot"
-  },
+  "bin": "./bin/abbot",
   "scripts": {
     "start": "node ./bin/abbot",
     "test": "echo \"Error: no test specified\" && exit 1"
