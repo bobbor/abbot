@@ -56,8 +56,8 @@ Promise.resolve().then(async () => {
   const project = await promptForInstance();
   const credentials = await promptForProject();
   const updater = checkStateGenerator(project, credentials);
-
-  poll(updater);
+  return poll(updater);
 }).catch(err => {
-  console.log(chalk`{red.bold ${err.message}}`)
+  console.log(chalk`{red.bold ${err.message}}`);
+  process.exit(1);
 });
