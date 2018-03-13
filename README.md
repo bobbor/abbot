@@ -1,17 +1,17 @@
-# jenkins
+# abbot
 simple nodejs jenkins client to poll job statuses.  
 One job is polled at a time.  
 As soon as job is done building, it will update the status and exit.
 
 ### Installation
 ```bash
-$ npm -g i bobbor/jenkins
+$ npm -g i abbot
 ```
 
 ### Usage
 
 ```bash
-$ jenkins
+$ abbot
 ```
 
 #### Parameters
