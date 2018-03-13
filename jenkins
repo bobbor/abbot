@@ -3,14 +3,15 @@
 const chalk = require('chalk');
 
 const { promptForInstance, promptForProject } = require('./lib/prompt');
-const { printJobState } = require('./lib/utils');
+const { printer } = require('./lib/utils');
 const { checkStateGenerator } = require('./lib/net');
-const {notify} = require('./lib/notify');
+const { notify } = require('./lib/notify');
 
 const log = require('debug')('jenkins:main');
 let state;
 const poll = async (updater) => {
   log('start polling');
+  const status = printer();
   const run = async (initial) => {
     const job = await updater();
     log('got job', job);
@@ -36,19 +37,18 @@ const poll = async (updater) => {
       }
     }
   };
-
-  const print = (initial) => {
-    printJobState(state, initial);
+  const print = () => {
+    status(state);
     if(!state || state.building) {
       log('reschedule printing for 1s');
       setTimeout(() => {
-        print(!state);
+        print();
       }, 350);
     }
   };
 
   await run(true);
-  print(true);
+  return print();
 };
 
 Promise.resolve().then(async () => {
@@ -58,6 +58,6 @@ Promise.resolve().then(async () => {
   const updater = checkStateGenerator(project, credentials);
   return poll(updater);
 }).catch(err => {
-  console.log(chalk`{red.bold ${err.message}}`);
+  console.log(chalk`\n{red.bold ${err.message}}`);
   process.exit(1);
 });
