@@ -1,6 +1,6 @@
 {
   "name": "abbot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "abbot helps you track your jenkins builds",
   "main": "./bin/abbot",
   "bin": "./bin/abbot",
@@ -21,10 +21,8 @@
   "issues": "https://github.com/bobbor/abbot/issues",
   "author": "Philipp Paul <me@philipp-paul.com>",
   "license": "MIT",
-  "devDependencies": {
-    "debug": "^3.1.0"
-  },
   "dependencies": {
+    "debug": "^3.1.0"
     "beepbeep": "^1.2.1",
     "chalk": "^2.3.2",
     "cli-spinners": "^1.1.0",
