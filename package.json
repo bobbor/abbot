@@ -1,6 +1,6 @@
 {
   "name": "abbot",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "abbot helps you track your jenkins builds",
   "main": "./bin/abbot",
   "bin": "./bin/abbot",
