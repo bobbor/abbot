@@ -43,7 +43,7 @@ const poll = async (updater) => {
       log('reschedule printing for 1s');
       setTimeout(() => {
         print();
-      }, 350);
+      }, 1000);
     }
   };
 
